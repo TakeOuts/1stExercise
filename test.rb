@@ -18,11 +18,21 @@
 # 1. Нельзя вводить пустые строки
 # 2. В качестве величины сдвига нельзя выбрать вещественное число, букву, спец. символ или пустую строку.
 
+# Проверка на существование аргументов, которые, по условиям задачи, не должны влиять на работу программы
+if ARGV.count != 0
+  print "Введенные Вами аргументы:"
+  ARGV.each do|a|
+    print " #{a},"
+  end
+  puts " не используются в данной программе"
+end
+
+
 # Бесконечный цикл, который может прервать только корректный ввод данных
 loop do
   puts "Введите строку для сдвига: "
   # Переменная @text объявлена как переменная экземпляра
-  @text = gets.chomp
+  @text = STDIN.gets.chomp
   # Если введенный текст не является пустой строкой, то выходим из цикла
   unless @text.empty?
     break
@@ -36,29 +46,31 @@ end
 loop do
   puts "Величина сдвига: "
   # Возможная ошибка, которая появится при парсинге целочисленного значения будет будет перехвачена с помощью rescue.
-  space = Integer(gets) rescue nil
+  space = Integer(STDIN.gets) rescue nil
   # В случае успешного парсинга
   unless space.nil?
+    print "Ответ: "
+    # Вычисление величины сдвига, которая бы не превышала длины сдвига
+    space = space >= 0 ? space % 26 : -(-space % 26)
+    
     # Побитово осуществляем анализ входной строки
     @text.each_byte do |i|
       # Если текущий симол является буквой, то осуществляем сдвиг. В противном случае оставляем всё как есть.
       # Функция Fixnum#chr преобразует любое число в ASCII
       unless (/[A-Za-z]/.match i.chr).nil?
-        # Если это заглавная буква
-        unless (/[A-Z]/.match i.chr).nil?
-          if space >= 0            
-            print 'Z'.ord - i - space + 1 >= 0 ? (i+space).chr : ('A'.ord - ('Z'.ord - i - space + 1)).chr
-          else
-            print i - 'A'.ord + space + 1 > 0 ? (i+space).chr : ('Z'.ord + (i - 'A'.ord + space + 1)).chr
-          end
-        # Если это строчная буква
-        else
+        # Если после сдвига буква не остается буквой
+        unless (i.chr.upcase.ord+space).between?('A'.ord, 'Z'.ord)
+          # Случай, когда осуществляется сдвиг в прямом направлении
           if space >= 0
-            print 'z'.ord - i - space + 1 >= 0 ? (i+space).chr : ('a'.ord - ('z'.ord - i - space + 1)).chr
+            print ((i.chr == i.chr.upcase ? 'A'.ord : 'a'.ord) - ('Z'.ord - i.chr.upcase.ord - space + 1)).chr
+          # Случай, когда осуществляется сдвиг в обратном направлении
           else
-            print i - 'a'.ord + space + 1 > 0 ? (i+space).chr : ('z'.ord + (i - 'a'.ord + space + 1)).chr
+            print ((i.chr == i.chr.upcase ? 'Z'.ord : 'z'.ord) + (i.chr.upcase.ord - 'A'.ord + space + 1)).chr
           end
-        end
+        # Если после сдвига буква остается буквой
+        else
+          print (i+space).chr
+        end        
       else
         print i.chr
       end
